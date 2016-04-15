@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Diagnostics.PerformanceData;
 using System.Linq;
 using System.Text;
@@ -24,8 +25,14 @@ namespace GameOfLife
     /// </summary>
     public partial class MainWindow : Window
     {
-        private const int FieldHeight = 60;
-        private const int FieldWidth = 60;
+        private const int FieldHeight = 50;
+        private const int FieldWidth = 50;
+        const double CellWidth = 7;
+        const double CellHeight = 7;
+        
+        private Random _random;
+        private VisualCell[,] _cells;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -35,36 +42,8 @@ namespace GameOfLife
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
             InitCells(3);
-            Draw();
         }
-
-      
-        readonly Brush _deadBrush = Brushes.White;
-        readonly Brush _liveBrush = Brushes.Green;
-        const double CellWidth = 10;
-        const double CellHeight = 10;
-
-        private void Draw()
-        {
-            LiveCanvas.Children.Clear();
-            for (int i = 0; i < _cells.GetLength(0); i++)
-            {
-                for (int j = 0; j < _cells.GetLength(1); j++)
-                {
-                    Rectangle rect = new Rectangle();
-                    rect.Width = CellWidth;
-                    rect.Height = CellHeight;
-                    rect.Stroke = Brushes.Black;
-                    rect.StrokeThickness = 0.5;
-                    Canvas.SetLeft(rect,CellWidth * j);
-                    Canvas.SetTop(rect, CellHeight * i);
-                    rect.Fill = _cells[i, j].CurrentState == CellState.Alive ? _liveBrush : _deadBrush;
-                    LiveCanvas.Children.Add(rect);
-
-                }
-            }
-        }
-
+       
         private void AddToCanvas(Rectangle rect, int i, int j)
         {
             rect.Width = CellWidth;
@@ -73,21 +52,26 @@ namespace GameOfLife
             rect.StrokeThickness = 0.5;
             Canvas.SetLeft(rect, CellWidth * j);
             Canvas.SetTop(rect, CellHeight * i);
-            rect.Fill = _cells[i, j].CurrentState == CellState.Alive ? _liveBrush : _deadBrush;
             LiveCanvas.Children.Add(rect);
         }
 
         private void InitCells(int liveDensity)
         {
-            _cells = new Cell[FieldHeight, FieldWidth];
+            _cells = new VisualCell[FieldHeight, FieldWidth];
             _random = new Random(DateTime.Now.Millisecond);
+
+            // Init array of cells
             for (int i = 0; i < _cells.GetLength(0); i++)
             {
                 for (int j = 0; j < _cells.GetLength(1); j++)
                 {
-                    _cells[i, j] = new Cell(_random.Next() % liveDensity == 0 ? CellState.Alive : CellState.Dead);
+                    _cells[i, j] = new VisualCell(_random.Next() % liveDensity == 0 ? CellState.Alive : CellState.Dead);
+                    // Add cell's rectangle to canvas
+                    AddToCanvas(_cells[i, j].Rectangle, i, j);
                 }
             }
+
+            // Count neightbours and add references
             for (int i = 0; i < _cells.GetLength(0); i++)
             {
                 for (int j = 0; j < _cells.GetLength(1); j++)
@@ -122,38 +106,48 @@ namespace GameOfLife
 
                 }
             }
-            
+
 
         }
 
-        private Random _random;
-        private Cell[,] _cells;
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+
+        private void ReinitButton_Click(object sender, RoutedEventArgs e)
         {
             InitCells(2);
-            Draw();
         }
 
-        private void Button_Click_1(object sender, RoutedEventArgs e)
+        private void NextRoundButton_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var cell in _cells)
+            NextRound();
+        }
+
+        private void NextRound(AutoResetEvent redrawComplete = null)
+        {
+            Parallel.ForEach(_cells.ToEnumerable<Cell>(), (c) => c.TakeTurn());
+            try
             {
-               cell.TakeTurn();
+                Dispatcher.Invoke(() =>
+                {
+                    foreach (var cell in _cells)
+                    {
+                        cell.NextRound();
+                    }
+                    redrawComplete?.Set();
+                }, DispatcherPriority.ApplicationIdle);
             }
-            foreach (var cell in _cells)
+            catch (TaskCanceledException exception)
             {
-                cell.NextRound();
+                Trace.WriteLine("Rude shutdown");
             }
-            Draw();
         }
 
         Thread AutoThread;
-        private void Button_Click_2(object sender, RoutedEventArgs e)
+        private void AUtoButton_Click(object sender, RoutedEventArgs e)
         {
             if (AutoThread == null)
             {
-                AutoThread = new Thread(AutoRoutine) {IsBackground = true};
+                AutoThread = new Thread(AutoRoutine) { IsBackground = true };
                 AutoThread.Start();
             }
             else
@@ -165,28 +159,18 @@ namespace GameOfLife
 
         private void AutoRoutine()
         {
+            AutoResetEvent redrawComplete = new AutoResetEvent(false);
             while (true)
             {
-                //foreach (var cell in _cells)
-                //{
-                //    cell.TakeTurn();
-                //}
-                //foreach (var cell in _cells)
-                //{
-                //    cell.NextRound();
-                //}
-
-                Parallel.ForEach(_cells.ToEnumerable<Cell>(), (c) => c.TakeTurn());
-                Parallel.ForEach(_cells.ToEnumerable<Cell>(), (c) => c.NextRound());
-
-                Dispatcher.Invoke(Draw, DispatcherPriority.ApplicationIdle);
-                Thread.Sleep(10);
+                NextRound(redrawComplete);
+                redrawComplete.WaitOne();
+                Thread.Sleep(50);
             }
-          
+
         }
 
 
-       
+
     }
     public static class ArrayExtensions
     {
