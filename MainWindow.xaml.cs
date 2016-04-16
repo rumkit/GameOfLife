@@ -65,7 +65,7 @@ namespace GameOfLife
             {
                 for (int j = 0; j < _cells.GetLength(1); j++)
                 {
-                    _cells[i, j] = new VisualCell(_random.Next() % liveDensity == 0 ? CellState.Alive : CellState.Dead);
+                    _cells[i, j] = new VisualCell(_random.Next() % liveDensity == 0 ? CellState.Dead : CellState.Alive);
                     // Add cell's rectangle to canvas
                     AddToCanvas(_cells[i, j].Rectangle, i, j);
                 }

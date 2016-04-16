@@ -1,0 +1,21 @@
+﻿<Window x:Class="GameOfLife.BitmapWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GameOfLife"
+        mc:Ignorable="d"
+        Title="BitmapWindow" Height="371.642" Width="534.627">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="459*"/>
+            <ColumnDefinition Width="142*"/>
+        </Grid.ColumnDefinitions>
+        <Image x:Name="DisplayImage"/>
+        <StackPanel Grid.Column="1">
+            <Button Width ="100" Height="40" Margin="5" Content="Reinit" Click="ReinitButton_Click"></Button>
+            <Button Width ="100" Height="40" Margin="5" Content="NextRound" Click="NextRoundButton_Click"></Button>
+            <Button Width ="100" Height="40" Margin="5" Content="Auto" Click="AutoButton_Click"></Button>
+        </StackPanel>
+    </Grid>
+</Window>
