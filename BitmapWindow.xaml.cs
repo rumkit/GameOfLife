@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.PerformanceData;
 using System.Drawing;
 using System.Linq;
@@ -15,6 +16,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using Color = System.Drawing.Color;
+using Image = System.Drawing.Image;
+using Point = System.Drawing.Point;
 
 namespace GameOfLife
 {
@@ -23,8 +27,8 @@ namespace GameOfLife
     /// </summary>
     public partial class BitmapWindow : Window
     {
-        private const int FieldWidth = 640;
-        private const int FieldHeight = 480;
+        private const int FieldWidth = 240;
+        private const int FieldHeight = 120;
         private ColorCell[] _cells;
         private byte[] _sourceBitmapArray;
         private const int DefaultDesity = 10;
@@ -97,13 +101,25 @@ namespace GameOfLife
             }
         }
 
-        private uint _generationsCount = 0;
+        private int _generationsCount = 0;
 
         private void NextRound()
         {
             Parallel.ForEach(_cells, (c) => c.TakeTurn());
             Parallel.ForEach(_cells, (c) => c.NextRound());
-           
+            UpdateGenerationCount();
+        }
+
+        private void UpdateGenerationCount()
+        {
+            if (CheckAccess())
+            {
+                GenerationsTextBox.Text = Interlocked.Increment(ref _generationsCount).ToString();
+            }
+            else
+            {
+                Dispatcher.Invoke(UpdateGenerationCount);
+            }
         }
 
         private void UpdateImage(AutoResetEvent redrawComplete = null)
@@ -121,7 +137,6 @@ namespace GameOfLife
                 var wbm = (WriteableBitmap) DisplayImage.Source;
                 wbm.WritePixels(new Int32Rect(0, 0, FieldWidth, FieldHeight), _sourceBitmapArray,
                     BytesPerPixel * FieldWidth, 0, 0);
-                GenerationsTextBox.Text = (++_generationsCount).ToString();
                 redrawComplete?.Set();
             }
             else
@@ -169,6 +184,34 @@ namespace GameOfLife
                 //Thread.Sleep(50);
             }
 
+        }
+
+        private void DisplayImage_OnMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            var position = e.GetPosition(this);
+            var imagePosition = this.TranslatePoint(position, DisplayImage);
+            OnCellTouched(imagePosition, e.ChangedButton);
+        }
+
+        private void DisplayImage_OnMouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed || e.RightButton == MouseButtonState.Pressed)
+            {
+                var position = e.GetPosition(this);
+                var imagePosition = this.TranslatePoint(position, DisplayImage);
+                OnCellTouched(imagePosition, e.LeftButton == MouseButtonState.Pressed ? MouseButton.Left : MouseButton.Right);
+            }
+        }
+
+        private void OnCellTouched(System.Windows.Point position, MouseButton changedButton)
+        {
+            var pixelX = (int)(position.X / DisplayImage.ActualWidth * FieldWidth);
+            var pixelY = (int)(position.Y / DisplayImage.ActualHeight * FieldHeight);
+            Debug.WriteLine($"X:{pixelX}  Y:{pixelY}");
+            var selectedCell = _cells[pixelX + FieldWidth * pixelY];
+            selectedCell.Color = Color.Green;
+            selectedCell.CurrentState = changedButton == MouseButton.Left ? CellState.Alive : CellState.Dead;
+            UpdateImage();
         }
     }
 }

@@ -23,7 +23,17 @@ namespace GameOfLife
             CurrentState = state;
         }
 
-        public CellState CurrentState { get; private set; }
+        public void InvertState()
+        {
+            if (CurrentState == CellState.Alive)
+                CurrentState = CellState.Dead;
+            else
+            {
+                CurrentState = CellState.Alive;
+            }
+        }
+
+        public CellState CurrentState { get; internal set; }
         public CellState FutureState { get; private set; }
         public List<Cell> Neightbours { get; private set; }
 

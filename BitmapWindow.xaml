@@ -12,7 +12,7 @@
             <ColumnDefinition Width="142*"/>
         </Grid.ColumnDefinitions>
         <Image x:Name="DisplayImage" RenderOptions.BitmapScalingMode="NearestNeighbor"
-               RenderOptions.EdgeMode="Aliased"/>
+               RenderOptions.EdgeMode="Aliased" MouseDown="DisplayImage_OnMouseDown" MouseMove="DisplayImage_OnMouseMove"/>
         <StackPanel Grid.Column="1">
             <Button Width ="100" Height="40" Margin="5" Content="Reinit" Click="ReinitButton_Click"></Button>
             <Button Width ="100" Height="40" Margin="5" Content="NextRound" Click="NextRoundButton_Click"></Button>
