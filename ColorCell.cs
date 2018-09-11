@@ -26,7 +26,7 @@ namespace GameOfLife
 //            var bytes = new byte[3];
 //            Random.NextBytes(bytes);
 //            _color = Color.FromArgb(0xFF, bytes[0], bytes[1], bytes[2]);
-            _color = ColorFromHSV(Random.Next(1,Int16.MaxValue), 1,1);
+            _color = ColorFromHSV(Random.Next(1,255), 1,1);
         }
 
         private Color GetNewColor(IEnumerable<Color> colors)
