@@ -23,11 +23,11 @@ namespace GameOfLife
     /// </summary>
     public partial class BitmapWindow : Window
     {
-        private const int FieldHeight = 480;
         private const int FieldWidth = 640;
-        private Cell[] _cells;
+        private const int FieldHeight = 480;
+        private ColorCell[] _cells;
         private byte[] _sourceBitmapArray;
-        private const int DefaultDesity = 15;
+        private const int DefaultDesity = 10;
         readonly PixelFormat pixelFormat = PixelFormats.Bgr24;
         const int BytesPerPixel = 3;
         const int Dpi = 96;
@@ -51,13 +51,13 @@ namespace GameOfLife
 
         private void Initialize(int liveDensity)
         {
-            _cells = new Cell[FieldHeight*FieldWidth];
+            _cells = new ColorCell[FieldHeight*FieldWidth];
             _sourceBitmapArray = new byte[_cells.Length*BytesPerPixel];
             var random = new Random(DateTime.Now.Millisecond);
 
             for (int i = 0; i < _cells.Length; i++)
             {
-                _cells[i] = new Cell(random.Next() % liveDensity != 0? CellState.Dead : CellState.Alive);
+                _cells[i] = new ColorCell(random.Next() % liveDensity != 0? CellState.Dead : CellState.Alive);
             }
             for (int i = 0; i < _cells.Length; i++)
             {
@@ -97,6 +97,8 @@ namespace GameOfLife
             }
         }
 
+        private uint _generationsCount = 0;
+
         private void NextRound()
         {
             Parallel.ForEach(_cells, (c) => c.TakeTurn());
@@ -109,19 +111,23 @@ namespace GameOfLife
             if (CheckAccess())
             {
                 Parallel.For(0, _cells.Length,
-                ((i) => _sourceBitmapArray[i * BytesPerPixel + 1] = _cells[i].CurrentState == CellState.Alive ? (byte)0xFF : (byte)0));
+                (i =>
+                {
+                    _sourceBitmapArray[i * BytesPerPixel] = _cells[i].Color.B;
+                    _sourceBitmapArray[i * BytesPerPixel + 1] = _cells[i].Color.G;
+                    _sourceBitmapArray[i * BytesPerPixel + 2] = _cells[i].Color.R;
+                    
+                }));
                 var wbm = (WriteableBitmap) DisplayImage.Source;
                 wbm.WritePixels(new Int32Rect(0, 0, FieldWidth, FieldHeight), _sourceBitmapArray,
-                    BytesPerPixel*FieldWidth, 0, 0);
+                    BytesPerPixel * FieldWidth, 0, 0);
+                GenerationsTextBox.Text = (++_generationsCount).ToString();
                 redrawComplete?.Set();
             }
             else
             {
                 Dispatcher.Invoke(() => UpdateImage(redrawComplete), DispatcherPriority.Background);
             }
-          
-            
-            
         }
 
        

@@ -60,6 +60,7 @@
     <Compile Include="BitmapWindow.xaml.cs">
       <DependentUpon>BitmapWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="ColorCell.cs" />
     <Compile Include="VisualCell.cs" />
     <Page Include="BitmapWindow.xaml">
       <SubType>Designer</SubType>

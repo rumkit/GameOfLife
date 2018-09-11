@@ -16,6 +16,8 @@
             <Button Width ="100" Height="40" Margin="5" Content="Reinit" Click="ReinitButton_Click"></Button>
             <Button Width ="100" Height="40" Margin="5" Content="NextRound" Click="NextRoundButton_Click"></Button>
             <Button Width ="100" Height="40" Margin="5" Content="Auto" Click="AutoButton_Click"></Button>
+            <Label Content="Generations" Margin="5" HorizontalAlignment="Center"/>
+            <TextBox IsReadOnly="True" x:Name="GenerationsTextBox" Width="100" Height="40" Margin="5"/>
         </StackPanel>
     </Grid>
 </Window>
